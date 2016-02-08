@@ -16,6 +16,7 @@ db = MongoClient().bitcoin  # our database: we're interested in BTC here... :-)
 # series: dict containing key-value pairs for data series in the database, where
 # - key: name of the MongoDB collection field
 # - value: name of the data series in data framework from Quandl
+# (we don't map _id since we always use the field `Date` as `_id` form MongoDB collections)
 datasets = [dict(label='COINBASE/USD', collection=db.coinbase,
                  series=dict(open='Open', high='High', low='Low', volume='Volume')),
             dict(label='BITCOINWATCH/MINING', collection=db.mining,
@@ -37,16 +38,8 @@ def get_last_date(collection):
     :type collection: object
     :return: (str) last update date or None if not found
     """
-    # FIXME improve this...
-    res = collection.find({}, {'_id': 1}).sort('_id', -1).limit(1)
-    if res is None:
-        return None
-    else:
-        maxdate = None
-        for item in res:
-            maxdate = item['_id']
-            break
-    return maxdate
+    res = collection.find_one(sort=[('_id', -1)])
+    return None if res is None else res.get('_id')
 
 
 def add_one_day(date):
